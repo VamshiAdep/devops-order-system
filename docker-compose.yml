@@ -1,0 +1,22 @@
+services:
+  payment-service:
+    build: ./payment-service
+    container_name: payment
+    ports:
+      - "5001:5001"
+    networks:
+      - devops-network
+
+  order-service:
+    build: ./order-service
+    container_name: order
+    ports:
+      - "5000:5000"
+    networks:
+      - devops-network
+    depends_on:
+      - payment-service
+
+networks:
+  devops-network:
+    driver: bridge
