@@ -1,0 +1,108 @@
+@Library('my-shared-library') _
+
+pipeline {
+
+    agent any
+
+    parameters {
+        choice(name: 'action', choices: ['create', 'delete'], description: 'Choose create/delete')
+        string(name: 'ImageName', defaultValue: 'mircoservices', description: 'Docker image name')
+        string(name: 'ImageTag', defaultValue: 'v1', description: 'Docker image tag')
+        string(name: 'vamshiadep21', defaultValue: 'vamshiadep21', description: 'vamshiadep21')
+    }
+
+    environment {
+        IMAGE_NAME = "${params.ImageName}"
+        IMAGE_TAG = "${params.ImageTag}"
+        DOCKER_USER = "${params.DockerHubUser}"
+        SONAR_CREDENTIAL = "sonarqube-api"
+    }
+
+    stages {
+
+        stage('Git Checkout') {
+            when { expression { params.action == 'create' } }
+            steps {
+                gitCheckout(
+                    branch: "main",
+                    url: "git@github.com:praveen1994dec/Java_app_3.0.git"
+                )
+            }
+        }
+
+        stage('Unit Test') {
+            when { expression { params.action == 'create' } }
+            steps {
+                mvnTest()
+            }
+        }
+
+        stage('Integration Test') {
+            when { expression { params.action == 'create' } }
+            steps {
+                mvnIntegrationTest()
+            }
+        }
+
+        stage('Static Code Analysis - SonarQube') {
+            when { expression { params.action == 'create' } }
+            steps {
+                statiCodeAnalysis(SONAR_CREDENTIAL)
+            }
+        }
+
+        stage('Quality Gate Check') {
+            when { expression { params.action == 'create' } }
+            steps {
+                QualityGateStatus(SONAR_CREDENTIAL)
+            }
+        }
+
+        stage('Maven Build') {
+            when { expression { params.action == 'create' } }
+            steps {
+                mvnBuild()
+            }
+        }
+
+        stage('Docker Build') {
+            when { expression { params.action == 'create' } }
+            steps {
+                dockerBuild(IMAGE_NAME, IMAGE_TAG, DOCKER_USER)
+            }
+        }
+
+        stage('Trivy Image Scan') {
+            when { expression { params.action == 'create' } }
+            steps {
+                dockerImageScan(IMAGE_NAME, IMAGE_TAG, DOCKER_USER)
+            }
+        }
+
+        stage('Docker Push') {
+            when { expression { params.action == 'create' } }
+            steps {
+                dockerImagePush(IMAGE_NAME, IMAGE_TAG, DOCKER_USER)
+            }
+        }
+
+        stage('Docker Cleanup') {
+            when { expression { params.action == 'create' } }
+            steps {
+                dockerImageCleanup(IMAGE_NAME, IMAGE_TAG, DOCKER_USER)
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline executed successfully 🚀"
+        }
+        failure {
+            echo "Pipeline failed ❌ Check logs"
+        }
+        always {
+            echo "Pipeline completed"
+        }
+    }
+}
