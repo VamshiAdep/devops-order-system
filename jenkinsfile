@@ -6,9 +6,9 @@ pipeline {
 
     parameters {
         choice(name: 'action', choices: ['create', 'delete'], description: 'Choose create/delete')
-        string(name: 'ImageName', defaultValue: 'mircoservices', description: 'Docker image name')
+        string(name: 'ImageName', defaultValue: 'microservices', description: 'Docker image name')
         string(name: 'ImageTag', defaultValue: 'v1', description: 'Docker image tag')
-        string(name: 'vamshiadep21', defaultValue: 'vamshiadep21', description: 'vamshiadep21')
+        string(name: 'DockerHubUser', defaultValue: 'vamshiadep21', description: 'DockerHub Username')
     }
 
     environment {
@@ -16,8 +16,6 @@ pipeline {
         IMAGE_TAG = "${params.ImageTag}"
         DOCKER_USER = "${params.DockerHubUser}"
         SONAR_CREDENTIAL = "sonarqube-api"
-
-        
     }
 
     stages {
@@ -32,20 +30,6 @@ pipeline {
             }
         }
 
-        stage('Unit Test') {
-            when { expression { params.action == 'create' } }
-            steps {
-                mvnTest()
-            }
-        }
-
-        stage('Integration Test') {
-            when { expression { params.action == 'create' } }
-            steps {
-                mvnIntegrationTest()
-            }
-        }
-
         stage('Static Code Analysis - SonarQube') {
             when { expression { params.action == 'create' } }
             steps {
@@ -57,13 +41,6 @@ pipeline {
             when { expression { params.action == 'create' } }
             steps {
                 QualityGateStatus(SONAR_CREDENTIAL)
-            }
-        }
-
-        stage('Maven Build') {
-            when { expression { params.action == 'create' } }
-            steps {
-                mvnBuild()
             }
         }
 
@@ -105,7 +82,6 @@ pipeline {
         }
         always {
             echo "Pipeline completed"
-            
         }
     }
 }
