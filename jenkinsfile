@@ -16,6 +16,8 @@ pipeline {
         IMAGE_TAG = "${params.ImageTag}"
         DOCKER_USER = "${params.DockerHubUser}"
         SONAR_CREDENTIAL = "sonarqube-api"
+
+        
     }
 
     stages {
